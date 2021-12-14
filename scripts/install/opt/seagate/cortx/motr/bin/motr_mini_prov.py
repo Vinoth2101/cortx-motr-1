@@ -1415,7 +1415,7 @@ def start_service(self, service, idx):
     execute_command(self, cmd)
 
     #Start motr services
-    cmd = f"{MOTR_SERVER_SCRIPT_PATH service idx}"
+    cmd = f"{MOTR_SERVER_SCRIPT_PATH} {service} {idx}"
     execute_command_verbose(self, cmd, set_timeout=False)
 
     return

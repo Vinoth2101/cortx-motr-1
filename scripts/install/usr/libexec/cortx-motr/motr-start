@@ -84,7 +84,7 @@ start_confd_service() {
         #starting confd service
         fids=$(get_fids confd)
         echo " starting m0d-$fids service"
-        #sh $SCRIPT_PATH/motr-monitor $fid &
+        sh $SCRIPT_PATH/motr-monitor $fid &
 }
 
 start_ios_services() {
@@ -96,6 +96,9 @@ start_ios_services() {
         echo "Checking IOS INDEX RANGE"
         range_start_idx=$(get_idx_start_val $1 $2)
         range_end_idx=$((range_start_idx + $2 - 1))
+	if [[ $range_end_idx -eq 0 ]]; then
+		range_end_idx=$MUL_FACT
+	fi
         echo "Index Range $range_start_idx ~ $range_end_idx"
 
         for index in ${IOS_IDX_ARRAY[@]}; do
@@ -108,7 +111,7 @@ start_ios_services() {
                         break
                 fi
                 echo " starting m0d-$fid service"
-                #sh $SCRIPT_PATH/motr-monitor $fid &
+                sh $SCRIPT_PATH/motr-monitor $fid &
         done
 }
 
@@ -123,7 +126,7 @@ start_all_services() {
 usage() {
         prog_name=$(basename $0)
         echo "Usage :"
-        echo "$prog_name all|io|confd"
+        echo "$prog_name all|ioservice|confd"
         echo "$prog_name all index range"
         echo "$prog_name io  index range"
         echo "$prog_name confd"
@@ -137,15 +140,16 @@ usage() {
         echo "--help|-h - help command"
 
 }
+
 if [[ "$1" == "--help" || "$1" == "-h" || "$1" == "?" ]]; then
         usage
         exit 0
 fi
 
-if [[ "$1" == "all" || "$1" == "io" ]]; then
-        if [[ "$#" -ge 3 ]]; then
+if [[ "$1" == "all" || "$1" == "ioservice" ]]; then
+        if [[ "$#" -ge 2 ]]; then
                 start_idx=$2
-                MF=$3
+		MF=$3
                 continue
         else
                 echo "ERR: Invalid List of arugments"
@@ -158,14 +162,15 @@ if [[ "$1" == "all" ]]; then
         start_all_services $start_idx $MF
 elif [[ "$1" == "confd" ]]; then
         start_confd_service
-elif [[ "$1" == "io" ]]; then
+elif [[ "$1" == "ioservice" ]]; then
         start_ios_services $start_idx $MF
 else
-        if [[ "$1" == "fsm" ]]; then
-                sh $SCRIPT_PATH/motr-monitor $fid &
-        else
-                echo "ERR MSG : no proper input service name"
-        fi
+	echo "ERR MSG : no proper input service name"
+	exit 1
 fi
 
-wait
+for job in `jobs -p`
+do
+echo $job
+    wait $job
+done
