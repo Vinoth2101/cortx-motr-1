@@ -82,7 +82,7 @@ get_fids() {
 
 start_confd_service() {
         #starting confd service
-        fids=$(get_fids confd)
+        fid=$(get_fids confd)
         echo " starting m0d-$fids service"
         sh $SCRIPT_PATH/motr-monitor $fid &
 }
