@@ -84,7 +84,7 @@ start_confd_service() {
         #starting confd service
         fids=$(get_fids confd)
         echo " starting m0d-$fids service"
-        #sh $SCRIPT_PATH/motr-monitor $fid &
+        sh $SCRIPT_PATH/motr-monitor $fid &
 }
 
 start_ios_services() {
@@ -108,7 +108,7 @@ start_ios_services() {
                         break
                 fi
                 echo " starting m0d-$fid service"
-                #sh $SCRIPT_PATH/motr-monitor $fid &
+                sh $SCRIPT_PATH/motr-monitor $fid &
         done
 }
 
@@ -142,7 +142,7 @@ if [[ "$1" == "--help" || "$1" == "-h" || "$1" == "?" ]]; then
         exit 0
 fi
 
-if [[ "$1" == "all" || "$1" == "io" ]]; then
+if [[ "$1" == "all" || "$1" == "ioservice" ]]; then
         if [[ "$#" -ge 3 ]]; then
                 start_idx=$2
                 MF=$3
@@ -158,14 +158,15 @@ if [[ "$1" == "all" ]]; then
         start_all_services $start_idx $MF
 elif [[ "$1" == "confd" ]]; then
         start_confd_service
-elif [[ "$1" == "io" ]]; then
+elif [[ "$1" == "ioservice" ]]; then
         start_ios_services $start_idx $MF
 else
-        if [[ "$1" == "fsm" ]]; then
-                sh $SCRIPT_PATH/motr-monitor $fid &
-        else
-                echo "ERR MSG : no proper input service name"
-        fi
+	echo "ERR MSG : no proper input service name"
+	exit 1
 fi
 
-wait
+for job in `jobs -p`
+do
+echo $job
+    wait $job
+done
