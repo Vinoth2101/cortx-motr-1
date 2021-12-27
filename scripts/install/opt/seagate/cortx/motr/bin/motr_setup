@@ -322,8 +322,13 @@ class StartCmd(Cmd):
             if idx < 1:
                 self.logger.error(f"Invalid index({idx}). Index starts from 1\n")
                 return
+
+            if not self._count:
+                self._count = 1
+            count = int(self._count)
+
             configure_machine_id(self, name)
-            start_service(self, svc, idx)
+            start_service(self, svc, idx, count)
         else:
             self.logger.error(f"Invalid number of arguments.\n")
             self.logger.error("Usage: <prog> [-h] <cmd> --config <url> --services <service_name>  --idx <index>\n")

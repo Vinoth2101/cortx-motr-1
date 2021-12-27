@@ -28,7 +28,7 @@ import time
 import yaml
 from cortx.utils.conf_store import Conf
 
-MOTR_SERVER_SCRIPT_PATH = "/usr/libexec/cortx-motr/motr-start"
+MOTR_SERVER_SCRIPT_PATH = "/usr/libexec/cortx-motr/motr-monitor"
 MOTR_MKFS_SCRIPT_PATH = "/usr/libexec/cortx-motr/motr-mkfs"
 MOTR_FSM_SCRIPT_PATH = "/usr/libexec/cortx-motr/motr-free-space-monitor"
 MOTR_CONFIG_SCRIPT = "/opt/seagate/cortx/motr/libexec/motr_cfg.sh"
@@ -1354,7 +1354,8 @@ def get_fid(self, fids, service, idx):
             fids_list.append(fids[i]["fid"])
 
     num_fids = len(fids_list)
-
+    return fids_list, num_fids
+'''
     # --idx argument is started from index 1, to read fetch-fids from index 0
     idx = int(idx) - 1
 
@@ -1369,6 +1370,7 @@ def get_fid(self, fids, service, idx):
     else:
         self.logger.error(f"No fids for service({service}). Returning -1.")
         return -1
+'''
 
 # Fetch fid of service using command 'hctl fetch-fids'
 # First populate a yaml file with the output of command 'hctl fetch-fids'
@@ -1386,13 +1388,13 @@ def fetch_fid(self, service, idx):
     if len(fids) == 0:
         self.logger.error("No fids returned by 'hctl fetch-fids'. Returning -1.\n")
         return -1
-    fid = get_fid(self, fids, service, idx)
-    return fid
+    fids, num_fids = get_fid(self, fids, service, idx)
+    return fids, num_fids
 
 # If service is one of [ios,confd,hax] then we expect fid to start the service
 # and start services using motr-mkfs and motr-server.
 # For other services like 'motr-free-space-mon' we do nothing.
-def start_service(self, service, idx):
+def start_service(self, service, idx, count):
     self.logger.info(f"service={service}\nidx={idx}\n")
 
     if service == "fsm":
@@ -1411,17 +1413,37 @@ def start_service(self, service, idx):
     cmd = f"cp -v {self.local_path}/motr/sysconfig/{self.machine_id}/motr /etc/sysconfig/"
     execute_command(self, cmd)
 
-    #fid = fetch_fid(self, service, idx)
-    #if fid == -1:
-    #    return -1
     #Run log rotate in background to avoid delay in startup
     cmd = "/opt/seagate/cortx/motr/libexec/m0trace_logrotate.sh &"
     execute_command(self, cmd)
     cmd = "/opt/seagate/cortx/motr/libexec/m0addb_logrotate.sh &"
     execute_command(self, cmd)
 
-    #Start motr services
-    cmd = f"{MOTR_SERVER_SCRIPT_PATH} {service} {idx}"
-    execute_command_verbose(self, cmd, set_timeout=False)
+    if service == "ioservice":
+        fids,num_fids = fetch_fid(self, service, idx)
+        m0d_started_nr = 0
+        start_index = 0
+        if idx > 1:
+            start_index = (idx * count) - 1
+        if fids[start_index] == -1:
+            return -1
+    else
+        fid = fetch_fid(self, service, idx)
+	count=1
+        if fid == -1:
+            return -1
+        
+    if service == "ioservice":
+       for fid_start_nr in num_fids[start_index]:
+            if fid_start_nr >= count or fids[fid_start_nr] == -1
+                break
+            #Start motr ios services
+            cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{fids[i]}"
+            execute_command_verbose(self, cmd, set_timeout=False)
+    else
+       #Start motr confd services
+       cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{fid}"
+       execute_command_verbose(self, cmd, set_timeout=False)
+            
 
     return
