@@ -1347,7 +1347,6 @@ def delete_part(self, device, part_num):
 def get_fid(self, fids, service, idx):
     fids_list = []
     len_fids_list = len(fids)
-
     # Prepare list of all fids of matching service
     for i in range(len_fids_list):
         if fids[i]["name"] == service:
@@ -1391,12 +1390,21 @@ def fetch_fid(self, service, idx):
     fids, num_fids = get_fid(self, fids, service, idx)
     return fids, num_fids
 
+#starting io services based on count 
+def start_ios(self, fid_list, count):
+    for index_nr, start_fid in enumerate(fid_list):
+        if index_nr >= count or start_fid == -1:
+            break
+        #Start motr ios services
+        cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{start_fid}"
+        #execute_command_verbose(self, cmd, set_timeout=False)
+        print(f'starting service m0d-{start_fid}')
+
 # If service is one of [ios,confd,hax] then we expect fid to start the service
 # and start services using motr-mkfs and motr-server.
 # For other services like 'motr-free-space-mon' we do nothing.
 def start_service(self, service, idx, count):
     self.logger.info(f"service={service}\nidx={idx}\n")
-
     if service == "fsm":
         cmd = f"{MOTR_FSM_SCRIPT_PATH}"
         execute_command_verbose(self, cmd, set_timeout=False)
@@ -1418,32 +1426,33 @@ def start_service(self, service, idx, count):
     execute_command(self, cmd)
     cmd = "/opt/seagate/cortx/motr/libexec/m0addb_logrotate.sh &"
     execute_command(self, cmd)
-
+    print(f'service is {service} and count is {count}')
     if service == "ioservice":
-        fids,num_fids = fetch_fid(self, service, idx)
+        total_fids,num_fids = fetch_fid(self, service, idx)
         m0d_started_nr = 0
         start_index = 0
         if idx > 1:
             start_index = (idx * count) - 1
-        if fids[start_index] == -1:
+        if total_fids[start_index] == -1:
             return -1
-    else
+        fid_list = []
+        for index , fids in enumerate(total_fids):
+            fid_list.append(fids)
+            if index == (count - 1):
+                start_ios(self, fid_list, count)
+                index = 0
+
+        if fid_list:
+            start_ios(self, fid_list, count)
+                
+    else:
         fid = fetch_fid(self, service, idx)
-	count=1
+        count=1
         if fid == -1:
             return -1
-        
-    if service == "ioservice":
-       for fid_start_nr in num_fids[start_index]:
-            if fid_start_nr >= count or fids[fid_start_nr] == -1
-                break
-            #Start motr ios services
-            cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{fids[i]}"
-            execute_command_verbose(self, cmd, set_timeout=False)
-    else
-       #Start motr confd services
-       cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{fid}"
-       execute_command_verbose(self, cmd, set_timeout=False)
-            
+        #Start motr confd services
+        cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{fid}"
+        #execute_command_verbose(self, cmd, set_timeout=False)
+        print(f'starting service m0d-{fid}')
 
     return
