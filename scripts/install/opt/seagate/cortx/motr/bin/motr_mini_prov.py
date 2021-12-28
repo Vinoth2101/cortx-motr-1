@@ -26,6 +26,7 @@ import logging
 import glob
 import time
 import yaml
+import psutil
 from cortx.utils.conf_store import Conf
 
 MOTR_SERVER_SCRIPT_PATH = "/usr/libexec/cortx-motr/motr-monitor"
@@ -51,6 +52,8 @@ BE_SEG0_SZ = 128 * 1024 *1024 #128M
 MACHINE_ID_FILE = "/etc/machine-id"
 TEMP_FID_FILE= "/opt/seagate/cortx/motr/conf/service_fid.yaml"
 CMD_RETRY_COUNT = 5
+psub = []
+
 
 class MotrError(Exception):
     """ Generic Exception with error code and output """
@@ -167,6 +170,17 @@ def execute_command_verbose(self, cmd, timeout_secs = TIMEOUT_SECS, verbose = Fa
             continue
         return stdout, ps.returncode
     return
+
+def execute_command_background(self, cmd, timeout_secs = TIMEOUT_SECS, verbose = False, set_timeout=True, retry_count = CMD_RETRY_COUNT):
+    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    psub.append(psutil.Process(ps.pid))
+    self.logger.info(f"ret={ps.returncode}")
+    self.logger.debug(f"Executing {retry_count} time")
+    self.logger.debug(f"[RET] {ps.returncode}")
+    if ps.returncode != 0:
+        time.sleep(retry_count)
+        return ps.returncode
+    return ps
 
 def execute_command_without_exception(self, cmd, timeout_secs = TIMEOUT_SECS, retries = 1):
     for i in range(retries):
@@ -1393,12 +1407,14 @@ def fetch_fid(self, service, idx):
 #starting io services based on count 
 def start_ios(self, fid_list, count):
     for index_nr, start_fid in enumerate(fid_list):
-        if index_nr >= count or start_fid == -1:
+        if index_nr >= count:
             break
         #Start motr ios services
+        print(f'starting service m0d-{start_fid} &')
         cmd = f"{MOTR_SERVER_SCRIPT_PATH} {start_fid}"
-        execute_command_verbose(self, cmd, set_timeout=False)
-        #print(f'starting service m0d-{start_fid}')
+        #execute_command_verbose(self, cmd, set_timeout=False)
+        execute_command_background(self, cmd, set_timeout=False)
+        print(f'After starting service m0d-{start_fid}')
 
 # If service is one of [ios,confd,hax] then we expect fid to start the service
 # and start services using motr-mkfs and motr-server.
@@ -1432,27 +1448,34 @@ def start_service(self, service, idx, count):
         m0d_started_nr = 0
         start_index = 0
         if idx > 1:
-            start_index = (idx * count) - 1
+            start_index = (idx * count) - count
         if total_fids[start_index] == -1:
             return -1
         fid_list = []
+        print(f' values in fids list {total_fids} count {count}')
+        end_index = start_index + (count - 1) 
         for index , fids in enumerate(total_fids):
-            fid_list.append(fids)
-            if index == (count - 1):
-                start_ios(self, fid_list, count)
-                index = 0
+            if fids:
+                if index >= start_index and index <= end_index:
+                    fid_list.append(fids)
+                else:
+                    break
 
         if fid_list:
             start_ios(self, fid_list, count)
                 
     else:
-        fid = fetch_fid(self, service, idx)
-        count=1
+        fid, n_fids = fetch_fid(self, service, idx)
+        count=0
         if fid == -1:
             return -1
         #Start motr confd services
-        cmd = f"{MOTR_SERVER_SCRIPT_PATH} {fid}"
-        execute_command_verbose(self, cmd, set_timeout=False)
-        #print(f'starting service m0d-{fid}')
+        print(f'starting service m0d-{fid[count]}')
+        cmd = f"{MOTR_SERVER_SCRIPT_PATH} {fid[count]}"
+        execute_command_background(self, cmd, set_timeout=False)
+    
+    print(f'pids {psub}')
+    # waits for multiple processes to terminate
+    gone, alive = psutil.wait_procs(psub, timeout=None)
 
     return
