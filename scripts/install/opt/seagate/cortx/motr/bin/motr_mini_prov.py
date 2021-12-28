@@ -1396,9 +1396,9 @@ def start_ios(self, fid_list, count):
         if index_nr >= count or start_fid == -1:
             break
         #Start motr ios services
-        cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{start_fid}"
-        #execute_command_verbose(self, cmd, set_timeout=False)
-        print(f'starting service m0d-{start_fid}')
+        cmd = f"{MOTR_SERVER_SCRIPT_PATH} {start_fid}"
+        execute_command_verbose(self, cmd, set_timeout=False)
+        #print(f'starting service m0d-{start_fid}')
 
 # If service is one of [ios,confd,hax] then we expect fid to start the service
 # and start services using motr-mkfs and motr-server.
@@ -1451,8 +1451,8 @@ def start_service(self, service, idx, count):
         if fid == -1:
             return -1
         #Start motr confd services
-        cmd = f"{MOTR_SERVER_SCRIPT_PATH} m0d-{fid}"
-        #execute_command_verbose(self, cmd, set_timeout=False)
-        print(f'starting service m0d-{fid}')
+        cmd = f"{MOTR_SERVER_SCRIPT_PATH} {fid}"
+        execute_command_verbose(self, cmd, set_timeout=False)
+        #print(f'starting service m0d-{fid}')
 
     return
