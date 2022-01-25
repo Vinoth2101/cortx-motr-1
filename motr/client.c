@@ -893,9 +893,10 @@ void m0_op_free(struct m0_op *op)
 	/* bob_fini has been called in op_fini, using M0_AMB() here. */
 	oc = M0_AMB(oc, op, oc_op);
 	oo = M0_AMB(oo, oc, oo_oc);
-	if (oc->oc_cb_free != NULL)
+	if (oc->oc_cb_free != NULL) {
 		memory_stats(op->op_mem_id);
 		oc->oc_cb_free(oc);
+	}
 	else
 		m0_free(oo);
 
