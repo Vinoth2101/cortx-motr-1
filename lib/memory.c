@@ -41,7 +41,7 @@ enum { U_POISON_BYTE = 0x5f };
 #ifdef ENABLE_DEV_MODE
 #define DEV_MODE (true)
 #else
-#define DEV_MODE (false)
+#define DEV_MODE (true)
 #endif
 
 #ifdef ENABLE_FREE_POISON
