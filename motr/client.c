@@ -825,6 +825,8 @@ M0_INTERNAL int m0_op_init(struct m0_op *op,
 
 	/* XXX initialise a cookie? or wait for launch to do that... */
 	/*(*op)->op_gen = ?;*/
+        op->op_mem_id = m0_dummy_id_generate();
+        
 
 	/* Initialise the state machine. */
 	grp = &op->op_sm_group;
@@ -834,6 +836,7 @@ M0_INTERNAL int m0_op_init(struct m0_op *op,
 
 	M0_ASSERT(IS_IN_ARRAY(op->op_code, opcount));
 	op->op_count = opcount[op->op_code]++; /* XXX lock! */
+	memory_stats(op->op_mem_id);
 
 	/* m0_sm_invariant must be checked under sm_group lock. */
 	m0_sm_group_lock(grp);
@@ -891,6 +894,7 @@ void m0_op_free(struct m0_op *op)
 	oc = M0_AMB(oc, op, oc_op);
 	oo = M0_AMB(oo, oc, oo_oc);
 	if (oc->oc_cb_free != NULL)
+		memory_stats(op->op_mem_id);
 		oc->oc_cb_free(oc);
 	else
 		m0_free(oo);
