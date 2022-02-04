@@ -186,7 +186,7 @@ void *m0_do_alloc(size_t size, const char *fname, int lno)
 		M0_LOG(M0_ERROR, "Failed to allocate %zi bytes.", size);
 		m0_backtrace();
 	}
-	M0_LOG(M0_ALWAYS,"ptr %p size %zi func_name %s line_no %d", area, size, fname, lno);
+	M0_LOG(M0_ALWAYS,"fname %s ptr %p size %zi lno %d", fname, area, size, lno);
 	return area;
 }
 M0_EXPORTED(m0_do_alloc);
@@ -196,8 +196,7 @@ void m0_do_free(void *data, const char *fname, int lno)
 	if (data != NULL) {
 		size_t size = m0_arch_alloc_size(data);
 
-//		M0_LOG(M0_DEBUG, "%p", data);
-		M0_LOG(M0_ALWAYS, "ptr %p size %zi func_name %s line_no %d", data, size, fname, lno);
+		M0_LOG(M0_ALWAYS, "fname %s ptr %p size %zi lno %d", fname, data, size, lno);
 
 		if (DEV_MODE) {
 			m0_atomic64_sub(&allocated, size);

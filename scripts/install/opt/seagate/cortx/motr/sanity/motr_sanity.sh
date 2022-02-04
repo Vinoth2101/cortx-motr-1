@@ -217,19 +217,25 @@ object_io_test()
 	endpoint_opts="-l $local_endpoint -H $ha_endpoint -p $profile_fid \
 		       -P $process_fid"
 	rm -f $dest_file
+        set -x
+        echo "=================== Starting m0cp test *********************"
 	m0cp $endpoint_opts -o $obj_id1 -s $blk_size -c $blk_count $src_file || {
 		error_handling "Failed to write object" $?
 	}
+        echo "=================== Starting m0cat test *********************"
 	m0cat $endpoint_opts -o $obj_id1 -s $blk_size -c $blk_count $dest_file || {
 		error_handling "Failed to read object" $?
 	}
 	diff $src_file $dest_file || {
 		error_handling "Files differ" $?
 	}
+        echo "=================== Starting m0unlink test *********************"
 	m0unlink $endpoint_opts -o $obj_id1 || {
 		error_handling "Failed to delete object" $?
 	}
 	rm -f $dest_file
+        echo "=================== Complete m0unlink test *********************"
+	set +x
 
 	m0touch $endpoint_opts -o $obj_id2 || {
 		error_handling "Failed to create object" $?
@@ -348,8 +354,8 @@ run_tests()
 {
 	# Run litmus test
 	object_io_test
-	kv_test
-	m0spiel_test
+	#kv_test
+	#m0spiel_test
 }
 
 main()
