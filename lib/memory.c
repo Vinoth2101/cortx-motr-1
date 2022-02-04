@@ -35,6 +35,12 @@
 #include "lib/memory.h"
 #include "lib/finject.h"
 #include "lib/misc.h"   /* m0_round_down */
+#if 0
+#ifdef __GLIBC__
+#include <execinfo.h>
+#endif
+#endif
+
 
 enum { U_POISON_BYTE = 0x5f };
 
@@ -102,12 +108,47 @@ static struct m0_atomic64 allocated;
 static struct m0_atomic64 cumulative_alloc;
 static struct m0_atomic64 cumulative_free;
 
+#if 0
+#ifdef __GLIBC__
+/* Obtain a backtrace and print it to stdout. */
+M0_INTERNAL void print_trace (void)
+{
+	void *array[1024];
+	char **strings;
+	int size, i;
+
+	size = backtrace (array, 1024);
+	strings = backtrace_symbols (array, size);
+	if (strings != NULL)
+	{
+		M0_LOG(M0_ALWAYS, "Obtained %d stack frames.\n", size);
+		for (i = 0; i < size; i++)
+		M0_LOG(M0_ALWAYS,"%s\n", strings[i]);
+	}
+
+	m0_free(strings);
+}
+#endif
+#endif
+//M0_INTERNAL void memory_stats(uint64_t id,char *file)
 M0_INTERNAL void memory_stats(uint64_t id)
 {
 	M0_LOG(M0_ALWAYS, "id: %"PRIu64", allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
 	       "cumulative_free=%"PRIu64, id, m0_atomic64_get(&allocated),
 	       m0_atomic64_get(&cumulative_alloc),
 	       m0_atomic64_get(&cumulative_free));
+#if 0
+	if(file != NULL) {
+		if(!strncmp(file,"motr/client.c",14))
+		#ifdef __GLIBC__
+		print_trace();
+		#endif
+		M0_LOG(M0_ALWAYS, "id: %"PRIu64", allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
+		       "cumulative_free=%"PRIu64, id, m0_atomic64_get(&allocated),
+		       m0_atomic64_get(&cumulative_alloc),
+		       m0_atomic64_get(&cumulative_free));
+	}
+#endif
 }
 
 static void alloc_tail(void *area, size_t size)
@@ -145,7 +186,7 @@ void *m0_do_alloc(size_t size, const char *fname, int lno)
 		M0_LOG(M0_ERROR, "Failed to allocate %zi bytes.", size);
 		m0_backtrace();
 	}
-	M0_LEAVE("ptr=%p size=%zi func_name=%s line_no:%d", area, size, fname, lno);
+	M0_LOG(M0_ALWAYS,"ptr %p size %zi func_name %s line_no %d", area, size, fname, lno);
 	return area;
 }
 M0_EXPORTED(m0_do_alloc);
@@ -156,7 +197,7 @@ void m0_do_free(void *data, const char *fname, int lno)
 		size_t size = m0_arch_alloc_size(data);
 
 //		M0_LOG(M0_DEBUG, "%p", data);
-//		M0_LOG(M0_ERROR, "ptr=%p size=%zi func_name=%s line_no:%d", data, size, fname, lno);
+		M0_LOG(M0_ALWAYS, "ptr %p size %zi func_name %s line_no %d", data, size, fname, lno);
 
 		if (DEV_MODE) {
 			m0_atomic64_sub(&allocated, size);

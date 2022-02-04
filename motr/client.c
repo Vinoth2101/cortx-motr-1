@@ -836,7 +836,8 @@ M0_INTERNAL int m0_op_init(struct m0_op *op,
 
 	M0_ASSERT(IS_IN_ARRAY(op->op_code, opcount));
 	op->op_count = opcount[op->op_code]++; /* XXX lock! */
-	memory_stats(op->op_mem_id);
+	//memory_stats(op->op_mem_id,__FILE__);
+	//memory_stats(op->op_mem_id);
 
 	/* m0_sm_invariant must be checked under sm_group lock. */
 	m0_sm_group_lock(grp);
@@ -894,7 +895,7 @@ void m0_op_free(struct m0_op *op)
 	oc = M0_AMB(oc, op, oc_op);
 	oo = M0_AMB(oo, oc, oo_oc);
 	if (oc->oc_cb_free != NULL) {
-		memory_stats(op->op_mem_id);
+		//memory_stats(op->op_mem_id, __FILE__);
 		oc->oc_cb_free(oc);
 	}
 	else
