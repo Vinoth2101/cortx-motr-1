@@ -158,7 +158,7 @@ static int bufvec_alloc(struct m0_bufvec *bufvec,
 	M0_ALLOC_ARR(bufvec->ov_vec.v_count, num_segs);
 	if (bufvec->ov_vec.v_count == NULL)
 		goto fail;
-        M0_LOG(M0_ALWAYS, "[BUFVEC-ALLOC] fname %s ptr %p size %zi lno %d", fname, bufvec, (size_t)num_segs, lno);
+        //M0_LOG(M0_ALWAYS, "[BUFVEC-ALLOC] fname %s ptr %p size %zi lno %d", fname, bufvec, (size_t)num_segs, lno);
 
 	M0_ALLOC_ARR(bufvec->ov_buf, num_segs);
 	if (bufvec->ov_buf == NULL)
@@ -193,7 +193,7 @@ static int bufvec_alloc(struct m0_bufvec *bufvec,
 			if (M0_FI_ENABLED("buf-alloc-fail"))
 				goto fail;
 			bufvec->ov_vec.v_count[i] = seg_size;
-        		M0_LOG(M0_ALWAYS, "[BUFVEC-ALLOC] fname %s ptr %p size %zi id %"PRIu64, fname, bufvec->ov_buf[i], (size_t)seg_size,bufvec->ov_id);
+        		//M0_LOG(M0_ALWAYS, "[BUFVEC-ALLOC] fname %s ptr %p size %zi id %"PRIu64, fname, bufvec->ov_buf[i], (size_t)seg_size,bufvec->ov_id);
 
 		}
 	}
@@ -394,7 +394,7 @@ static void m0_bufvec__free(struct m0_bufvec *bufvec, bool free_bufs)
 	if (bufvec != NULL) {
 		if (bufvec->ov_buf != NULL && free_bufs) {
 			for (i = 0; i < bufvec->ov_vec.v_nr; ++i) {
-        		        M0_LOG(M0_ALWAYS, "[BUFVEC-FREE] ptr %p index %d %"PRIu64, bufvec->ov_buf[i], i, bufvec->ov_id);
+        		        //M0_LOG(M0_ALWAYS, "[BUFVEC-FREE] ptr %p index %d %"PRIu64, bufvec->ov_buf[i], i, bufvec->ov_id);
 				m0_free(bufvec->ov_buf[i]);
 			}
 		}

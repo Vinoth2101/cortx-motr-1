@@ -163,7 +163,7 @@ M0_INTERNAL size_t m0_allocated_total(void);
 /**
  * Print Meory stats
  */
-M0_INTERNAL void memory_stats(uint64_t id);
+M0_INTERNAL void memory_stats(void);
 M0_INTERNAL void print_trace (void);
 
 

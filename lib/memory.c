@@ -51,6 +51,10 @@ enum { U_POISON_BYTE = 0x5f };
 #endif
 
 #ifdef ENABLE_FREE_POISON
+
+static bool timer_started = false;
+uint64_t start_t;
+
 static void poison_before_free(void *data, size_t size)
 {
 	memset(data, U_POISON_BYTE, size);
@@ -131,10 +135,11 @@ M0_INTERNAL void print_trace (void)
 #endif
 #endif
 //M0_INTERNAL void memory_stats(uint64_t id,char *file)
-M0_INTERNAL void memory_stats(uint64_t id)
+//M0_INTERNAL void memory_stats(uint64_t id)
+M0_INTERNAL void memory_stats(void)
 {
-	M0_LOG(M0_ALWAYS, "id: %"PRIu64", allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
-	       "cumulative_free=%"PRIu64, id, m0_atomic64_get(&allocated),
+	M0_LOG(M0_ALWAYS, "[MEM-STAT] allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
+	       "cumulative_free=%"PRIu64, m0_atomic64_get(&allocated),
 	       m0_atomic64_get(&cumulative_alloc),
 	       m0_atomic64_get(&cumulative_free));
 #if 0
@@ -178,6 +183,11 @@ void *m0_do_alloc(size_t size, const char *fname, int lno)
 
 	if (M0_FI_ENABLED("fail_allocation"))
 		return NULL;
+	if ( timer_started == false ) {
+		start_t = m0_time_now();
+		timer_started = true;
+	}
+
 	area = m0_arch_alloc(size);
 	alloc_tail(area, size);
 	if (area != NULL) {
@@ -186,17 +196,32 @@ void *m0_do_alloc(size_t size, const char *fname, int lno)
 		M0_LOG(M0_ERROR, "Failed to allocate %zi bytes.", size);
 		m0_backtrace();
 	}
-	M0_LOG(M0_ALWAYS,"fname %s ptr %p size %zi lno %d", fname, area, size, lno);
+	if( (m0_time_now() - start_t) >= M0_TIME_ONE_SECOND * 30ULL) {
+		memory_stats();
+		timer_started = false;
+		start_t = 0;
+	}
+	//M0_LOG(M0_ALWAYS,"fname %s ptr %p size %zi lno %d", fname, area, size, lno);
 	return area;
 }
 M0_EXPORTED(m0_do_alloc);
 
 void m0_do_free(void *data, const char *fname, int lno)
 {
+	if ( timer_started == false ) {
+                start_t = m0_time_now();
+                timer_started = true;
+        }
+
 	if (data != NULL) {
 		size_t size = m0_arch_alloc_size(data);
+		if( (m0_time_now() - start_t) >= M0_TIME_ONE_SECOND * 30ULL ) {
+        	        memory_stats();
+                	timer_started = false;
+			start_t = 0;
+	        }
 
-		M0_LOG(M0_ALWAYS, "fname %s ptr %p size %zi lno %d", fname, data, size, lno);
+		//M0_LOG(M0_ALWAYS, "fname %s ptr %p size %zi lno %d", fname, data, size, lno);
 
 		if (DEV_MODE) {
 			m0_atomic64_sub(&allocated, size);
