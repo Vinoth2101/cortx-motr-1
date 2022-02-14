@@ -145,10 +145,10 @@ void bulkio_params_fini(struct bulkio_params *bp);
 void bulkio_test(struct bulkio_params *bp, int fids_nr, int fops_nr,
 		 int segs_nr);
 
-extern int do_m0_bufvec_alloc_aligned(struct m0_bufvec *bufvec, uint32_t num_segs,
-				   m0_bcount_t seg_size, unsigned shift,const char * fname,int lno);
+extern int m0_bufvec_alloc_aligned(struct m0_bufvec *bufvec, uint32_t num_segs,
+				   m0_bcount_t seg_size, unsigned shift);
 
-#define m0_bufvec_alloc_aligned(bufvec, num_segs, seg_size, shift) do_m0_bufvec_alloc_aligned(bufvec, num_segs, seg_size, shift, __func__, __LINE__)
+#define m0_bufvec_alloc_aligned(bufvec, num_segs, seg_size, shift) m0_bufvec_alloc_aligned(bufvec, num_segs, seg_size, shift)
 
 
 /**

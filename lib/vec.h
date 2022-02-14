@@ -147,7 +147,6 @@ struct m0_bufvec {
 	struct m0_vec  ov_vec;
 	/** Array of buffer addresses. */
 	void         **ov_buf;
-	uint64_t       ov_id;
 };
 
 /**
@@ -184,13 +183,8 @@ struct m0_bufvec {
    @retval -errno On failure.
    @see m0_bufvec_free()
  */
-//M0_INTERNAL int m0_bufvec_alloc(struct m0_bufvec *bufvec,
-//				uint32_t num_segs, m0_bcount_t seg_size);
-
-M0_INTERNAL int do_m0_bufvec_alloc(struct m0_bufvec *bufvec,
-				uint32_t num_segs, m0_bcount_t seg_size,
-				const char * fname, int lno);
-#define m0_bufvec_alloc(bufvec,num_segs, seg_size) do_m0_bufvec_alloc(bufvec, num_segs, seg_size,__func__,__LINE__)
+M0_INTERNAL int m0_bufvec_alloc(struct m0_bufvec *bufvec,
+				uint32_t num_segs, m0_bcount_t seg_size);
 
 /**
  * The same as m0_bufvec_alloc(), but doesn't allocate memory for segments.
@@ -235,11 +229,9 @@ M0_INTERNAL int m0_bufvec_merge(struct m0_bufvec *dst_bufvec,
    Allocates aligned memory as specified by shift value for a struct m0_bufvec.
    Currently in kernel mode it supports PAGE_SIZE alignment only.
  */
-M0_INTERNAL int do_m0_bufvec_alloc_aligned(struct m0_bufvec *bufvec,
+M0_INTERNAL int m0_bufvec_alloc_aligned(struct m0_bufvec *bufvec,
 					uint32_t num_segs,
-					m0_bcount_t seg_size, unsigned shift, const char * fname, int lno);
-
-#define m0_bufvec_alloc_aligned(bufvec, num_segs, seg_size, shift) do_m0_bufvec_alloc_aligned(bufvec, num_segs, seg_size, shift, __func__, __LINE__)
+					m0_bcount_t seg_size, unsigned shift);
 
 /**
    Allocates aligned memory as specified by shift value for a struct m0_bufvec.

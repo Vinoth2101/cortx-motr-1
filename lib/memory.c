@@ -52,8 +52,6 @@ enum { U_POISON_BYTE = 0x5f };
 
 #ifdef ENABLE_FREE_POISON
 
-static bool timer_started = false;
-uint64_t start_t;
 
 static void poison_before_free(void *data, size_t size)
 {
@@ -111,6 +109,8 @@ M0_INTERNAL void   m0_arch_memory_fini (void);
 static struct m0_atomic64 allocated;
 static struct m0_atomic64 cumulative_alloc;
 static struct m0_atomic64 cumulative_free;
+static bool timer_started = false;
+uint64_t start_t;
 
 #if 0
 #ifdef __GLIBC__

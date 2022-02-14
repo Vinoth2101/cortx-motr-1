@@ -140,9 +140,7 @@ static int bufvec_alloc(struct m0_bufvec *bufvec,
 			uint32_t          num_segs,
 			m0_bcount_t       seg_size,
 			unsigned          shift,
-			bool              pack,
-			const char*	  fname,
-			int		  lno)
+			bool              pack)
 {
 	uint32_t i;
 #ifdef __KERNEL__
@@ -153,12 +151,10 @@ static int bufvec_alloc(struct m0_bufvec *bufvec,
 	M0_PRE(ergo(shift != 0, seg_size > 0));
 	bufvec->ov_buf = NULL;
 	bufvec->ov_vec.v_nr = num_segs;
-	bufvec->ov_id = m0_dummy_id_generate();
 
 	M0_ALLOC_ARR(bufvec->ov_vec.v_count, num_segs);
 	if (bufvec->ov_vec.v_count == NULL)
 		goto fail;
-        //M0_LOG(M0_ALWAYS, "[BUFVEC-ALLOC] fname %s ptr %p size %zi lno %d", fname, bufvec, (size_t)num_segs, lno);
 
 	M0_ALLOC_ARR(bufvec->ov_buf, num_segs);
 	if (bufvec->ov_buf == NULL)
@@ -193,8 +189,6 @@ static int bufvec_alloc(struct m0_bufvec *bufvec,
 			if (M0_FI_ENABLED("buf-alloc-fail"))
 				goto fail;
 			bufvec->ov_vec.v_count[i] = seg_size;
-        		//M0_LOG(M0_ALWAYS, "[BUFVEC-ALLOC] fname %s ptr %p size %zi id %"PRIu64, fname, bufvec->ov_buf[i], (size_t)seg_size,bufvec->ov_id);
-
 		}
 	}
 	return 0;
@@ -211,28 +205,25 @@ fail:
 static int m0__bufvec_alloc(struct m0_bufvec *bufvec,
 			    uint32_t          num_segs,
 			    m0_bcount_t       seg_size,
-			    unsigned          shift,
-			    const char*	      fname,
-			    int		      lno)
+			    unsigned          shift)
 {
-	return bufvec_alloc(bufvec, num_segs, seg_size, shift, false,fname,lno);
+	return bufvec_alloc(bufvec, num_segs, seg_size, shift, false);
 }
 
 M0_INTERNAL int m0_bufvec_empty_alloc(struct m0_bufvec *bufvec,
 				      uint32_t          num_segs)
 {
-	return m0__bufvec_alloc(bufvec, num_segs, 0, 0,__func__,__LINE__);
+	return m0__bufvec_alloc(bufvec, num_segs, 0, 0);
 }
 M0_EXPORTED(m0_bufvec_empty_alloc);
 
-M0_INTERNAL int do_m0_bufvec_alloc(struct m0_bufvec *bufvec,
-				uint32_t num_segs, m0_bcount_t seg_size,
-				const char* fname,int lno)
+M0_INTERNAL int m0_bufvec_alloc(struct m0_bufvec *bufvec,
+				uint32_t num_segs, m0_bcount_t seg_size)
 {
 	M0_PRE(seg_size > 0);
-	return m0__bufvec_alloc(bufvec, num_segs, seg_size, 0,fname,lno);
+	return m0__bufvec_alloc(bufvec, num_segs, seg_size, 0);
 }
-M0_EXPORTED(do_m0_bufvec_alloc);
+M0_EXPORTED(m0_bufvec_alloc);
 
 M0_INTERNAL int m0_bufvec_extend(struct m0_bufvec *bufvec,
 				 uint32_t num_segs)
@@ -361,17 +352,16 @@ M0_INTERNAL int m0__bufvec_dont_dump(struct m0_bufvec *bufvec)
 }
 M0_EXPORTED(m0__bufvec_dont_dump);
 
-M0_INTERNAL int do_m0_bufvec_alloc_aligned(struct m0_bufvec *bufvec,
-					   uint32_t num_segs,
-					   m0_bcount_t seg_size, unsigned shift,
-					   const char* fname, int lno)
+M0_INTERNAL int m0_bufvec_alloc_aligned(struct m0_bufvec *bufvec,
+					uint32_t num_segs,
+					m0_bcount_t seg_size, unsigned shift)
 {
 	if (M0_FI_ENABLED("oom"))
 		return M0_ERR(-ENOMEM);
 
-	return m0__bufvec_alloc(bufvec, num_segs, seg_size, shift,fname,lno);
+	return m0__bufvec_alloc(bufvec, num_segs, seg_size, shift);
 }
-M0_EXPORTED(do_m0_bufvec_alloc_aligned);
+M0_EXPORTED(m0_bufvec_alloc_aligned);
 
 M0_INTERNAL int m0_bufvec_alloc_aligned_packed(struct m0_bufvec *bufvec,
 					       uint32_t num_segs,
@@ -381,9 +371,9 @@ M0_INTERNAL int m0_bufvec_alloc_aligned_packed(struct m0_bufvec *bufvec,
 
 	return bufvec_alloc(bufvec, num_segs, seg_size, shift,
 #ifndef __KERNEL__
-				true,__func__,__LINE__);
+				true);
 #else
-				false,__func__,__LINE__);
+				false);
 #endif
 }
 
@@ -393,10 +383,8 @@ static void m0_bufvec__free(struct m0_bufvec *bufvec, bool free_bufs)
 
 	if (bufvec != NULL) {
 		if (bufvec->ov_buf != NULL && free_bufs) {
-			for (i = 0; i < bufvec->ov_vec.v_nr; ++i) {
-        		        //M0_LOG(M0_ALWAYS, "[BUFVEC-FREE] ptr %p index %d %"PRIu64, bufvec->ov_buf[i], i, bufvec->ov_id);
+			for (i = 0; i < bufvec->ov_vec.v_nr; ++i)
 				m0_free(bufvec->ov_buf[i]);
-			}
 		}
 		m0_free(bufvec->ov_buf);
 		m0_free(bufvec->ov_vec.v_count);
