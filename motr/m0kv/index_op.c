@@ -64,6 +64,8 @@ static int index_op_tail(struct m0_entity *ce,
 					    M0_OS_STABLE),
 				    M0_TIME_NEVER);
 		m0_console_printf("operation rc: %i\n", op->op_rc);
+		if (op->op_rc != 0)
+			rc = op->op_rc;
 		if (sm_rc != NULL)
 			/* Save retcodes. */
 			*sm_rc = op->op_rc;
@@ -199,7 +201,7 @@ static int index_op(struct m0_realm    *parent,
 	 * Don't analyse per-item codes for NEXT, because usually user gets
 	 * -ENOENT in 'rcs' since he requests more entries than exist.
 	 */
-	if (opcode != M0_IC_NEXT)
+	if (rc == 0 && opcode != M0_IC_NEXT)
 	     rc = per_item_rcs_analyse(rcs, keys->ov_vec.v_nr);
 	m0_free(rcs);
 	return M0_RC(rc);

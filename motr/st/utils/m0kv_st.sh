@@ -607,6 +607,28 @@ bdelmN()
 	return $rc
 }
 
+delnonexist()
+{
+       local rc=0
+       echo "Test:Del key-val from non-existing index "
+       emsg="FAILED to del key-val from non-existing index"
+       echo ${MOTRTOOL} ${del_non_exist}
+       ${MOTRTOOL} ${del_non_exist} > ${out_file}
+       rc=$?
+       # This above cmd is expected to fail
+       [ $rc != 0 ] && {
+               echo "del from non-existing index returned error as expected."
+               return 0
+       }
+
+       # if the cmd did not fail, the test fail
+       cat ${out_file}
+       echo "del from non-existing index did not return error."
+       echo "This is an error."
+       rm_logs
+       return 1
+}
+
 st_init()
 {
 	# generate source files for KEYS, VALS, FIDS
@@ -647,6 +669,8 @@ st_init()
 
 	list="list \"${fid}\" ${num}"
 	list3="list \"${fid}\" 3"
+
+	del_non_exist="del \"<780000000000dcba:1234abcd>\" ${key}"
 }
 
 
@@ -793,7 +817,8 @@ if [ ${#tests_list[@]} -eq 0 ]; then
 				delsN
 				bdelsN
 				delmN
-				bdelmN)
+				bdelmN
+				delnonexist)
 fi
 
 trap interrupt SIGINT SIGTERM
