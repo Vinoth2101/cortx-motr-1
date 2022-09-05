@@ -123,7 +123,7 @@ M0_INTERNAL int main(int argc, char **argv)
 	int              result;
 	int              rc;
 	struct m0_motr   motr_ctx;
-	struct rlimit    rlim = {10240, 10240};
+	// struct rlimit    rlim = {10240, 10240};
 
 	if (argc > 1 &&
 	    (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0)) {
@@ -148,12 +148,13 @@ M0_INTERNAL int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 	}
-
+	#if 0
 	rc = setrlimit(RLIMIT_NOFILE, &rlim);
 	if (rc != 0) {
 		warnx("\n Failed to setrlimit\n");
 		goto out;
 	}
+	#endif
 
 	rc = cs_register_signal();
 	if (rc != 0) {
