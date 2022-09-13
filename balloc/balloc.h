@@ -356,7 +356,7 @@ enum {
 	 * Approximate number of groups. Exact number of groups can differ
 	 * depending on group size restrictions.
 	 */
-	BALLOC_DEF_GROUPS_NR            = 64,
+	BALLOC_DEF_GROUPS_NR            = 1024,
 	/** Used as minimal group size */
 	BALLOC_DEF_BLOCKS_PER_GROUP     = 32768,
 };
